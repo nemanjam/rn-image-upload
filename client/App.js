@@ -4,6 +4,31 @@ import ImagePicker from 'react-native-image-picker';
 
 const App = () => {
   const [photo, setPhoto] = useState(null);
+  const [progress, setProgress] = useState(0);
+
+  function uploadFileWithProgress(url, opts = {}, onProgress) {
+    return new Promise((res, rej) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open(opts.method || 'get', url);
+
+      Object.keys(opts.headers || {}).forEach(value => {
+        xhr.setRequestHeader(value, opts.headers[value]);
+      });
+
+      if (xhr.upload && onProgress) {
+        xhr.upload.onprogress = onProgress;
+      }
+
+      xhr.timeout = 10 * 1000;
+      xhr.ontimeout = rej;
+
+      xhr.onload = e => {
+        res(e.target.response);
+      };
+      xhr.onerror = rej;
+      xhr.send(opts.body);
+    });
+  }
 
   function createFormData(photo, body) {
     const data = new FormData();
@@ -25,15 +50,19 @@ const App = () => {
   }
 
   function handleUplaodPhoto() {
-    fetch('http://10.0.2.2:5000/api/upload', {
-      method: 'POST',
-      body: createFormData(photo, {userId: '123'}),
-    })
-      .then(response => response.json())
+    uploadFileWithProgress(
+      'http://10.0.2.2:5000/api/upload',
+      {method: 'POST', body: createFormData(photo, {userId: '123'})},
+      event => {
+        const _progress = Math.floor(event.loaded / event.total) * 100;
+        setProgress(_progress);
+      },
+    )
       .then(response => {
         console.log('upload success', response);
         alert('Upload success');
         setPhoto(null);
+        setProgress(0);
       })
       .catch(error => {
         console.log('upload error', error);
@@ -42,8 +71,8 @@ const App = () => {
   }
 
   function handleChoosePhoto() {
-    const options = {noData: true};
-    ImagePicker.launchImageLibrary(options, response => {
+    const options = {noData: true, maxWidth: 2000};
+    ImagePicker.launchCamera(options, response => {
       console.log(response);
       if (response.uri) {
         setPhoto(response);
@@ -57,6 +86,7 @@ const App = () => {
         {photo && (
           <>
             <Image source={{uri: photo.uri}} style={styles.image} />
+            <Text>Progress: {progress}%</Text>
             <Button title="Upload photo" onPress={handleUplaodPhoto}></Button>
           </>
         )}
@@ -79,3 +109,20 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+
+/*
+    fetch('http://10.0.2.2:5000/api/upload', {
+      method: 'POST',
+      body: createFormData(photo, {userId: '123'}),
+    })
+      .then(response => response.json())
+      .then(response => {
+        console.log('upload success', response);
+        alert('Upload success');
+        setPhoto(null);
+      })
+      .catch(error => {
+        console.log('upload error', error);
+        alert('Upload failed');
+      });
+      */
