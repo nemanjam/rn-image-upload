@@ -11,6 +11,7 @@ if (!fs.existsSync(imagesDir)) {
 }
 
 const app = express();
+
 app.use(bodyParser.json());
 
 const storage = multer.diskStorage({
@@ -18,7 +19,7 @@ const storage = multer.diskStorage({
     callback(null, imagesDir);
   },
   filename(req, file, callback) {
-    callback(null, `${file.filename}_${Date.now()}_${file.originalname}`);
+    callback(null, `${new Date().getTime().toString()}.jpg`);
   }
 });
 
@@ -34,7 +35,10 @@ app.get("/info", (req, res) => {
 app.post("/api/upload", upload.array("photo", 1), (req, res) => {
   console.log("file", req.files);
   console.log("body", req.body);
-  res.status(200).json({ message: "success", url: req.files[0].filename });
+  res.status(200).json({
+    message: "success",
+    url: `${req.headers.host}/images/${req.files[0].filename}`
+  });
 });
 
 let port = process.env.PORT || 5000;

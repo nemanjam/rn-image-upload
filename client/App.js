@@ -1,10 +1,19 @@
 import React, {useState} from 'react';
-import {StyleSheet, View, Text, Image, Button, Platform} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  Button,
+  Platform,
+  Clipboard,
+} from 'react-native';
 import ImagePicker from 'react-native-image-picker';
 
 const App = () => {
   const [photo, setPhoto] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [url, setUrl] = useState(null);
 
   function uploadFileWithProgress(url, opts = {}, onProgress) {
     return new Promise((res, rej) => {
@@ -58,22 +67,23 @@ const App = () => {
         setProgress(_progress);
       },
     )
-      .then(response => {
-        console.log('upload success', response);
-        alert('Upload success');
+      .then(_response => {
+        const response = JSON.parse(_response);
+        setUrl(response.url);
+        Clipboard.setString(response.url);
         setPhoto(null);
         setProgress(0);
+        alert('Url is in the clipboard.');
       })
       .catch(error => {
-        console.log('upload error', error);
-        alert('Upload failed');
+        alert(JSON.stringify(error, null, 2));
       });
   }
 
   function handleChoosePhoto() {
+    setUrl(null);
     const options = {noData: true, maxWidth: 2000};
-    ImagePicker.launchCamera(options, response => {
-      console.log(response);
+    ImagePicker.showImagePicker(options, response => {
       if (response.uri) {
         setPhoto(response);
       }
@@ -90,7 +100,14 @@ const App = () => {
             <Button title="Upload photo" onPress={handleUplaodPhoto}></Button>
           </>
         )}
-        <Button title="Choose Photo" onPress={handleChoosePhoto}></Button>
+        {url && (
+          <>
+            <Text>Url: {url}</Text>
+          </>
+        )}
+        <Button
+          title={!url ? 'Choose Photo' : 'Choose Another Photo'}
+          onPress={handleChoosePhoto}></Button>
       </View>
     </>
   );
