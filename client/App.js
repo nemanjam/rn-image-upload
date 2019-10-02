@@ -118,7 +118,12 @@ const App = () => {
         });
       });
   }
+  //
   // adb shell input keyevent 82
+  // adb connect 192.168.0.134:5555
+  // adb reverse tcp:8081 tcp:8081
+  // ubacio 10.0.2.2:8081 ili ova radi:192.168.0.184:8081 u telefon za metro, ipconfig
+  //
   function handleChoosePhoto() {
     setUrl(null);
     const options = {
